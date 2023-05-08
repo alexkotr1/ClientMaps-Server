@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Προσθήκη Πελάτη</title>
+    <link rel="stylesheet" href="/styles/addClient.css">
+</head>
+<body>
+    <div class="fancy-input">
+        <input type="text" id="name" required value="<%=text%>">
+        <label for="input-1">Ονοματεπώνυμο</label>
+        <span class="bar"></span>
+    </div>
+    <div class="fancy-input">
+        <input type="text" id="phone" required>
+        <label for="input-2">Τηλέφωνο</label>
+        <span class="bar"></span>
+    </div>
+    <div class="fancy-input">
+        <input type="text" id="comments" required>
+        <label for="input-3">Σχόλια</label>
+        <span class="bar"></span>
+    </div>
+    <input id="search-box" type="text" placeholder="Αναζήτηση τοποθεσίας" hidden="true">
+    <div id="map" style="width: 70%; height: 400px; margin-top:30px;"></div>
+    <button class="fancy-button" style="margin-top:30px;" id="add-btn">Προσθηκη</button>
+</body>
+<script src="/scripts/locationPicker.js"></script>
+<style>
+#search-box {
+    margin-top: 10px;
+    width: 30%;
+    height: 8%
+}</style>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBGq4XWeoz4xR_yycQlWePstiy8uFzjDYs&libraries=places&callback=initMap"></script>
+<script src="/scripts/addClient.js"></script>
+</html>

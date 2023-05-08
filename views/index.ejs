@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <link rel="stylesheet" href="/styles/index.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Οδηγός Πελατών</title>
+</head>
+<body>
+    <h1 style="text-align:center; margin:40px">Πελάτες</h1>
+    <div class="container">
+            <input type="text" class="search-bar" id="search-bar" placeholder="Αναζήτηση...">
+            <button class="add-btn" id="add-btn">Προσθήκη Πελάτη</button>
+        <ul id="item-list">
+            <% data.forEach(function(item, index) { %>
+                <li data-id="<%= item.id %>">
+                    <div class="name"><%= item.name %></div>
+                    <div class="phone"><%= item.phone %></div>
+                    <button class="edit-btn">Επεξεργασία</button>
+                    <button class="delete-btn">Διαγραφή</button>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+    <script>var data = JSON.parse('<%- JSON.stringify(data) %>');</script>
+    <div class="message-container">
+        <span class="message" id="message-text"></span>
+    </div>
+    <script src="/scripts/main.js"></script>
+</body>
+</html>
