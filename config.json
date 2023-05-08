@@ -1,0 +1,10 @@
+{
+    "DB_USERNAME" : "",
+    "DB_HOST" : "",
+    "DATABASE" : "",
+    "DB_PASSWORD" : "",
+    "DB_PORT" : "",
+    "GOOGLE_API_KEY" : "",
+    "API_KEY" : "",
+    "PORT" : 8000
+}
