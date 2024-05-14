@@ -1,3 +1,5 @@
+const { error } = require('console');
+
 const express = require('express'),
 app = express(),
 map = require('./map.json'),
@@ -12,12 +14,39 @@ options = {
     formatter:null,
     language:'el'
 },
-geocoder = NodeGeocoder(options)
+geocoder = NodeGeocoder(options),
+fs=require('fs')
 
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
+
+app.get('/scrapJSON/:key',async (req,res)=>{
+    if (req.params.key !== config.API_KEY) {
+        logger.warn("Got GET request in /addClient/ with wrong API password.")
+        return res.sendStatus(403)
+    }
+    var clients = await Client.getAllClients()
+    data = clients.map(client =>{
+        return {
+            name: client.name, description: client.comments, phone: client.phone, point:[client.latitude,client.longitude] 
+        }
+    })
+    try{
+        data = JSON.stringify(data)
+        fs.writeFileSync('./data.json',data);
+        res.download(filePath, './data.json', (err) => {
+            if (err) {
+              console.error('Error downloading the file:', err);
+              res.status(500).send('Error downloading the file');
+            }
+          });
+    } catch(error){
+        console.error(error);
+    }
+
+})
 
 app.get('/addClient/:key/:text?', (req,res)=>{
     console.log("Received GET request")
