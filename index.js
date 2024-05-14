@@ -30,13 +30,16 @@ app.get('/scrapJSON/:key',async (req,res)=>{
     var clients = await Client.getAllClients()
     data = clients.map(client =>{
         return {
-            name: client.name, description: client.comments, phone: client.phone, point:[client.latitude,client.longitude] 
+            name: client.name, 
+            description: client.comments, 
+            phone: client.phone, 
+            point:[client.latitude,client.longitude] 
         }
     })
     try{
         data = JSON.stringify(data)
         fs.writeFileSync('./data.json',data);
-        res.download(filePath, './data.json', (err) => {
+        res.download('./data.json', (err) => {
             if (err) {
               console.error('Error downloading the file:', err);
               res.status(500).send('Error downloading the file');
