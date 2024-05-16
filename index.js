@@ -3,7 +3,7 @@ const { error } = require('console');
 const express = require('express'),
 app = express(),
 map = require('./map.json'),
-shouldScrapData = false,
+shouldScrapData = true,
 Client = require('./Client'),
 logger = require('./Logger.js'),
 NodeGeocoder = require("node-geocoder"),
@@ -28,16 +28,8 @@ app.get('/scrapJSON/:key',async (req,res)=>{
         return res.sendStatus(403)
     }
     var clients = await Client.getAllClients()
-    data = clients.map(client =>{
-        return {
-            name: client.name, 
-            description: client.comments, 
-            phone: client.phone, 
-            point:[client.latitude,client.longitude] 
-        }
-    })
     try{
-        data = JSON.stringify(data)
+        const data = JSON.stringify(clients)
         fs.writeFileSync('./data.json',data);
         res.download('./data.json', (err) => {
             if (err) {
@@ -122,6 +114,7 @@ app.post('/data/:key', async (req, res) => {
     }     
     const clients = await Client.getAllClients()
     logger.info("Retrieving all data");
+    console.log(clients[0].place)
     return res.send(JSON.stringify(clients.map(client => client.clientToData())))
 })
 
@@ -168,10 +161,11 @@ app.listen(config.PORT, async () => {
     await Client.deleteAll();
     for (var x = 0; x < map.length; x++) {
         let item = map[x]
-        let client = new Client(item.name, item.description ? item.description.toString() : "", "",item.point.split(',')[1],item.point.split(',')[0],[])
-     /*   for (var y = 0;y < randomInt(1,8);y++){
-            client.names.push(makeid(10))
-        }*/
+        let client = new Client(item.name,item.phone,item.comments,item.latitude,item.longitude,item.names,item.place)
+        if (!client.place){
+            const place = await geocoder.reverse({ lat: client.latitude, lon: client.longitude })
+            client.place = place[0].city;
+        }
         await client.save()
     }
 })
