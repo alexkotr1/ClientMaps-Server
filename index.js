@@ -1,9 +1,11 @@
 const { error } = require('console');
 
 const express = require('express'),
+multer = require('multer'),
+bodyParser = require('body-parser');
 app = express(),
 map = require('./map.json'),
-shouldScrapData = true,
+shouldScrapData = false,
 Client = require('./Client'),
 logger = require('./Logger.js'),
 NodeGeocoder = require("node-geocoder"),
@@ -15,12 +17,51 @@ options = {
     language:'el'
 },
 geocoder = NodeGeocoder(options),
-fs=require('fs')
+fs=require('fs'),
+path = require('path'),
+storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, (req.params.clientID ? req.params.clientID : file.fieldname) + path.extname(file.originalname));
+    }
+}),
+upload = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Invalid file type'), false);
+        }
+    }
+});
 
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+app.use(express.static('uploads'));
 
+app.get('/download/:key/:clientID', (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'uploads', req.params.clientID + ".jpg");
+    if (!fs.existsSync(filePath)) return res.sendStatus(404);
+    res.download(filePath, filename, (err) => {
+        if (err) {
+            console.error(err);
+            res.status(500).send('An error occurred while downloading the file.');
+        }
+    });
+});
+
+app.post('/upload/:key/:clientID', upload.fields([{ name: 'image' }, { name: 'name' }]), (req, res) => {
+    if (req.fileValidationError) {
+        return res.status(400).send(req.fileValidationError);
+    }
+    res.send('File uploaded successfully');
+});
 
 app.get('/scrapJSON/:key',async (req,res)=>{
     if (req.params.key !== config.API_KEY) {
@@ -76,7 +117,7 @@ app.get('/:key', async (req,res)=>{
 })
 
 app.get('/edit/:id/:key', async (req,res)=>{
-    logger.info('Got GET request in /addClient/');
+    logger.info('Got GET request in /edit/');
     if (req.params.key !== config.API_KEY) {
         logger.warn("Got POST request in /edit with wrong API password.")
         return res.sendStatus(403)
@@ -98,12 +139,16 @@ app.post('/add/:key', async (req, res) => {
     }
     const client = Client.dataToClient(data)
     client.name = removeAccents(client.name).toUpperCase()
-    const place = await geocoder.reverse({ lat: client.latitude, lon: client.longitude })
-    client.place = place[0].city;
-    console.log(client.place)
+    try {
+        const place = await geocoder.reverse({ lat: client.latitude, lon: client.longitude })
+        client.place = place[0].city;
+        console.log(client.place)
+    } catch (err){
+        console.error(err)
+    }
     const result = await client.save()
     logger.info("Adding a new client with ID:" + client.id);
-    return res.sendStatus(result)
+    return res.status(result).json({ clientId: client.id });
 })
 
 
@@ -114,7 +159,6 @@ app.post('/data/:key', async (req, res) => {
     }     
     const clients = await Client.getAllClients()
     logger.info("Retrieving all data");
-    console.log(clients[0].place)
     return res.send(JSON.stringify(clients.map(client => client.clientToData())))
 })
 
@@ -152,7 +196,7 @@ app.post('/edit/:id/:key', async (req, res) => {
     client.place = place[0].city;
     logger.info("Edited client with ID: " + client.id + " to:\n" + client)
     const result = await client.update(req.params.id);
-    return res.sendStatus(result)
+    return res.status(result).json({ clientId: client.id });
 })
 
 app.listen(config.PORT, async () => {

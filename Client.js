@@ -1,9 +1,11 @@
 const pool = require('./DBClient'),
 { v4: uuidv4 } = require('uuid'),
 logger = require("./Logger.js");
+fs=require('fs'),
+path = require('path');
 
 class Client {
-  constructor(name, phone, comments, latitude, longitude, names, place = null,id = null) {
+  constructor(name, phone, comments, latitude, longitude, names, place = null,id = null, has_image = false) {
     this.name = name;
     this.phone = phone;
     this.comments = comments;
@@ -12,6 +14,7 @@ class Client {
     this.names = names;
     this.place = place;
     this.id = id ? id : uuidv4();
+    this.has_image = has_image;
   }
 
   async save() {
@@ -58,6 +61,7 @@ class Client {
     data.names = this.names;
     data.place = this.place;
     data.id = this.id;
+    data.has_image = this.has_image;
     return data
   }
   static async delete(id) {
@@ -81,7 +85,6 @@ class Client {
     SET name = $1, phone = $2, comments = $3, latitude = $4, longitude = $5, names = $6, place = $7
     WHERE id = $8;
   `;
-    console.log("place:", this.place)
     const values = [
       this.name,
       this.phone,
@@ -139,7 +142,10 @@ class Client {
     `;
     try {
       const result = await pool.query(queryText);
-      return result.rows.map(row => new Client(row.name, row.phone, row.comments, row.latitude, row.longitude, row.names, row.place, row.id));
+      return result.rows.map(row => {
+        const filePath = path.join(__dirname, 'uploads', row.id + ".jpg");
+        return new Client(row.name, row.phone, row.comments, row.latitude, row.longitude, row.names, row.place, row.id, fs.existsSync(filePath))
+    });
     } catch (err) {
       logger.error('Error retrieving all clients:', err);
       return [];
